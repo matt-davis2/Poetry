@@ -1,16 +1,18 @@
 // PoetryApp/Services/PoemApiService.cs
 using PoetryApp.Controllers;
+using PoetryApp.DataAccess;
 using PoetryApp.Models;
 
 namespace PoetryApp.Services;
 
-public class PoemService(HttpClient httpClient, ILogger<PoemService> logger)
+public class PoemService(IPoemRepository poemRepository, ILogger<PoemService> logger)
 {
-    public async Task<Poem[]?> GetAllPoemsAsync()
+    private const string CollectionName = "Poems";
+    public async Task<List<Poem>> GetAllPoemsAsync()
     {
         try
         {
-            var response = await httpClient.GetFromJsonAsync<Poem[]>("api/poem");
+            var response = await poemRepository.GetAllAsync<Poem>(CollectionName);
             return response;
         }
         catch (HttpRequestException ex)
@@ -20,11 +22,11 @@ public class PoemService(HttpClient httpClient, ILogger<PoemService> logger)
         }
     }
 
-    public async Task<Poem?> GetPoemByIdAsync(int id)
+    public async Task<Poem?> GetPoemByIdAsync(string id)
     {
         try
         {
-            var response = await httpClient.GetFromJsonAsync<Poem>($"api/poem/{id}");
+            var response = await poemRepository.GetByIdAsync<Poem>(CollectionName, id);
             return response;
         }
         catch (HttpRequestException ex)
@@ -34,18 +36,15 @@ public class PoemService(HttpClient httpClient, ILogger<PoemService> logger)
         }
     }
 
-    public async Task<Poem?> CreatePoemAsync(CreatePoemRequest request)
+    public async Task CreatePoemAsync(Poem poem)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("api/poem", request);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<Poem>();
+            await poemRepository.CreateAsync(CollectionName, poem);
         }
         catch (HttpRequestException ex)
         {
             logger.LogError(ex, "Error creating poem via API");
-            return null;
         }
     }
 }

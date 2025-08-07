@@ -1,5 +1,7 @@
+using MongoDB.Bson;
 using MongoDB.Driver;
 using PoetryApp.Components;
+using PoetryApp.DataAccess;
 using PoetryApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +17,20 @@ builder.Services.AddSwaggerGen();
 
 // Configure MongoDB
 var connectionString = builder.Configuration.GetConnectionString("MongoDB");
+
+var settings = MongoClientSettings.FromConnectionString(connectionString);
+// Set the ServerApi field of the settings object to set the version of the Stable API on the client
+settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+// Create a new client and connect to the server
+var client = new MongoClient(settings);
+// Send a ping to confirm a successful connection
+try {
+    var result = client.GetDatabase("admin").RunCommand<BsonDocument>(new BsonDocument("ping", 1));
+    Console.WriteLine("Pinged your deployment. You successfully connected to MongoDB!");
+} catch (Exception ex) {
+    Console.WriteLine(ex);
+}
+
 builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
 {
     return new MongoClient(connectionString);
@@ -23,7 +39,7 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
 builder.Services.AddScoped(serviceProvider =>
 {
     var client = serviceProvider.GetRequiredService<IMongoClient>();
-    var databaseName = "your-database-name"; // Replace with your actual database name
+    var databaseName = "PoetryAppDb"; // Replace with your actual database name
     return client.GetDatabase(databaseName);
 });
 
@@ -35,14 +51,16 @@ builder.Services.AddHttpClient<WeatherService>(client =>
     client.BaseAddress = new Uri("http://localhost:5171/"); // Adjust port as needed
 });
 
-builder.Services.AddHttpClient<PoemService>(client =>
-{
-    // This will be set to the same host as the app
-    client.BaseAddress = new Uri("http://localhost:5171/"); // Adjust port as needed
-});
+// builder.Services.AddHttpClient<PoemService>(client =>
+// {
+//     // This will be set to the same host as the app
+//     client.BaseAddress = new Uri("http://localhost:5171/"); // Adjust port as needed
+// });
 
 // Add our services
 //builder.Services.AddScoped<WeatherService>();
+builder.Services.AddScoped<IPoemRepository, PoemRepository>();
+builder.Services.AddScoped<PoemService>();
 
 var app = builder.Build();
 

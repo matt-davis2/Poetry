@@ -19,7 +19,7 @@
         <span>Loading poems from API...</span>
     </div>
 }
-else if (poems == null || !poems.Any())
+else if (!poems.Any())
 {
     <div class="alert alert-warning">
         <strong>No poems found.</strong>
@@ -28,7 +28,7 @@ else if (poems == null || !poems.Any())
 else
 {
     <div class="alert alert-success">
-        <strong>@poems.Length poems loaded from API!</strong>
+        <strong>@poems.Count poems loaded from API!</strong>
     </div>
 
     <div class="row">
@@ -98,7 +98,7 @@ else
 </div>
 
 @code {
-    private Poem[]? poems;
+    private List<Poem> poems;
     private Poem? selectedPoem;
     private bool isLoading = true;
     private bool isCreating = false;
@@ -140,25 +140,22 @@ else
         isCreating = true;
         StateHasChanged();
 
-        var request = new CreatePoemRequest
+        var request = new Poem
         {
             Title = newPoemTitle,
             Author = newPoemAuthor,
             Content = newPoemContent
         };
 
-        var createdPoem = await PoemService.CreatePoemAsync(request);
+        await PoemService.CreatePoemAsync(request);
         
-        if (createdPoem != null)
-        {
-            // Refresh the list
-            poems = await PoemService.GetAllPoemsAsync();
+        // Refresh the list
+        poems = await PoemService.GetAllPoemsAsync();
             
-            // Clear form
-            newPoemTitle = string.Empty;
-            newPoemAuthor = string.Empty;
-            newPoemContent = string.Empty;
-        }
+        // Clear form
+        newPoemTitle = string.Empty;
+        newPoemAuthor = string.Empty;
+        newPoemContent = string.Empty;
 
         isCreating = false;
         StateHasChanged();

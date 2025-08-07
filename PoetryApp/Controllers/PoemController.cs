@@ -1,5 +1,6 @@
 // PoetryApp/Controllers/PoemController.cs
 using Microsoft.AspNetCore.Mvc;
+using PoetryApp.Models;
 
 namespace PoetryApp.Controllers;
 
@@ -47,19 +48,4 @@ public class PoemController : ControllerBase
         Poems.Add(poem);
         return CreatedAtAction(nameof(GetById), new { id = poem.Id }, poem);
     }
-}
-
-public class Poem
-{
-    public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Author { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
-}
-
-public class CreatePoemRequest
-{
-    public string Title { get; set; } = string.Empty;
-    public string Author { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
 }

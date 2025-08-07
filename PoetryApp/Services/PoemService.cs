@@ -1,5 +1,6 @@
 // PoetryApp/Services/PoemApiService.cs
 using PoetryApp.Controllers;
+using PoetryApp.Models;
 
 namespace PoetryApp.Services;
 

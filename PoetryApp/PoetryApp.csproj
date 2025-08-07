@@ -4,9 +4,11 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>poetryapp-secrets-12345</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="MongoDB.Driver" Version="3.4.2" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4-beta1" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
       <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.3" />

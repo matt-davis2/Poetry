@@ -1,0 +1,165 @@
+@* PoetryApp/Components/Pages/Poems.razor *@
+@page "/poems"
+@using PoetryApp.Controllers
+@using PoetryApp.Services
+@inject PoemService PoemService
+@rendermode InteractiveServer
+
+<PageTitle>Poetry Collection</PageTitle>
+
+<h1>Poetry Collection</h1>
+
+<p>Browse and manage poems through our API.</p>
+
+@if (isLoading)
+{
+    <div class="d-flex align-items-center">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        <span>Loading poems from API...</span>
+    </div>
+}
+else if (poems == null || !poems.Any())
+{
+    <div class="alert alert-warning">
+        <strong>No poems found.</strong>
+    </div>
+}
+else
+{
+    <div class="alert alert-success">
+        <strong>@poems.Length poems loaded from API!</strong>
+    </div>
+
+    <div class="row">
+        @foreach (var poem in poems)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@poem.Title</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">by @poem.Author</h6>
+                        <p class="card-text">@GetPreview(poem.Content)</p>
+                        <button class="btn btn-primary btn-sm" @onclick="() => SelectPoem(poem)">
+                            Read Full Poem
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (selectedPoem != null)
+{
+    <div class="modal d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@selectedPoem.Title</h5>
+                    <button type="button" class="btn-close" @onclick="ClosePoem"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="text-muted">by @selectedPoem.Author</h6>
+                    <div class="mt-3">
+                        @((MarkupString)selectedPoem.Content.Replace("\n", "<br/>"))
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<hr />
+
+<h3>Add New Poem</h3>
+<div class="card">
+    <div class="card-body">
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text" class="form-control" @bind="newPoemTitle" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Author</label>
+            <input type="text" class="form-control" @bind="newPoemAuthor" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Content</label>
+            <textarea class="form-control" rows="5" @bind="newPoemContent"></textarea>
+        </div>
+        <button class="btn btn-success" @onclick="CreatePoem" disabled="@isCreating">
+            @if (isCreating)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Add Poem
+        </button>
+    </div>
+</div>
+
+@code {
+    private Poem[]? poems;
+    private Poem? selectedPoem;
+    private bool isLoading = true;
+    private bool isCreating = false;
+    
+    private string newPoemTitle = string.Empty;
+    private string newPoemAuthor = string.Empty;
+    private string newPoemContent = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        poems = await PoemService.GetAllPoemsAsync();
+        isLoading = false;
+    }
+
+    private string GetPreview(string content)
+    {
+        return content.Length > 100 ? content[..100] + "..." : content;
+    }
+
+    private void SelectPoem(Poem poem)
+    {
+        selectedPoem = poem;
+    }
+
+    private void ClosePoem()
+    {
+        selectedPoem = null;
+    }
+
+    private async Task CreatePoem()
+    {
+        if (string.IsNullOrWhiteSpace(newPoemTitle) || 
+            string.IsNullOrWhiteSpace(newPoemAuthor) || 
+            string.IsNullOrWhiteSpace(newPoemContent))
+        {
+            return;
+        }
+
+        isCreating = true;
+        StateHasChanged();
+
+        var request = new CreatePoemRequest
+        {
+            Title = newPoemTitle,
+            Author = newPoemAuthor,
+            Content = newPoemContent
+        };
+
+        var createdPoem = await PoemService.CreatePoemAsync(request);
+        
+        if (createdPoem != null)
+        {
+            // Refresh the list
+            poems = await PoemService.GetAllPoemsAsync();
+            
+            // Clear form
+            newPoemTitle = string.Empty;
+            newPoemAuthor = string.Empty;
+            newPoemContent = string.Empty;
+        }
+
+        isCreating = false;
+        StateHasChanged();
+    }
+}

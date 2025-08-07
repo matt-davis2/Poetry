@@ -1,0 +1,85 @@
+﻿
+@page "/weather"
+@using PoetryApp.Controllers
+@using PoetryApp.Services
+@attribute [StreamRendering]
+@inject WeatherService WeatherService
+@rendermode InteractiveServer
+
+<PageTitle>Weather</PageTitle>
+
+<h1>Weather Forecast</h1>
+
+<p>This component demonstrates fetching data from our internal API.</p>
+
+<div class="mb-3">
+    <label for="daysInput" class="form-label">Number of days:</label>
+    <input type="number" class="form-control" id="daysInput" @bind="daysToForecast" min="1" max="30" />
+    <button class="btn btn-primary mt-2" @onclick="LoadWeatherData">Refresh Weather</button>
+</div>
+
+@if (isLoading)
+{
+    <div class="d-flex align-items-center">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        <span>Loading weather data from API...</span>
+    </div>
+}
+else if (forecasts == null || !forecasts.Any())
+{
+    <div class="alert alert-warning">
+        <strong>No weather data available.</strong> Unable to load data from the API.
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <strong>Data loaded from API!</strong> Showing forecast for @forecasts.Length days.
+    </div>
+    
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th aria-label="Temperature in Celsius">Temp. (C)</th>
+            <th aria-label="Temperature in Fahrenheit">Temp. (F)</th>
+            <th>Summary</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var forecast in forecasts)
+        {
+            <tr>
+                <td>@forecast.Date.ToShortDateString()</td>
+                <td>@forecast.TemperatureC°</td>
+                <td>@forecast.TemperatureF°</td>
+                <td>
+                    <span class="badge bg-secondary">@forecast.Summary</span>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private WeatherForecast[]? forecasts;
+    private bool isLoading = true;
+    private int daysToForecast = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWeatherData();
+    }
+
+    private async Task LoadWeatherData()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        forecasts = await WeatherService.GetWeatherForecastAsync(daysToForecast);
+        
+        isLoading = false;
+        StateHasChanged();
+    }
+}
